@@ -14,6 +14,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -142,15 +143,26 @@ public class ContactMapActivity extends AppCompatActivity {
             /*
             locationManager.requestLocationUpdates(
             LocationManager.GPS_PROVIDER,0,0,gpsListener);
-*/
+            */
+
         }catch(Exception e ){
             e.printStackTrace();
         }
         }
+
     private void requestLocationPermission() {
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                 LOCATION_PERM_CODE);
     }
+    private void startLocationUpdates(){
+            //checks if permission has been  granted. If it has, the app starts the code to find the device’s location.
+            if(isLocationPermissionGranted()){
+                //This statement determines if the user had previously denied a request from the app to access the device’s location
+                if(ActivityCompat.shouldShowRequestPermissionRationale(ContactMapActivity.this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)){
+                }
+            }
+        }
 
 
 
@@ -161,14 +173,15 @@ public class ContactMapActivity extends AppCompatActivity {
 public void onPause(){
         super.onPause();
         try{
+            /*
             locationManager.removeUpdates(gpsListener);
-
+*/
         }
         catch (Exception e){
             e.printStackTrace();
         }
 }
-
+//If Location is granted return true if not return false.
 private boolean isLocationPermissionGranted() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
