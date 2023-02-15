@@ -23,6 +23,8 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import org.w3c.dom.Text;
 
 import java.io.IOException;
@@ -40,10 +42,7 @@ public class ContactMapActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact_map);
         //Creating objects references
-        initGetLocationButton();
-
-
-
+       initNewGetLocationButton();
 
 
         //Navigate Buttons
@@ -76,150 +75,173 @@ public class ContactMapActivity extends AppCompatActivity {
             }
         });
     }
-
-        //Location Button method
-        private void initGetLocationButton() {
-            locationButton = findViewById(R.id.buttonGetLocation);
-            locationButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                        String address;
-                        EditText editAddress = (EditText) findViewById(R.id.editAddress);
-                        EditText editCity = (EditText) findViewById(R.id.editCity);
-                        EditText editState = (EditText) findViewById(R.id.editState);
-                        EditText editZipcode = (EditText) findViewById(R.id.editZipcode);
-
-                        address = editAddress.getText().toString() + ", " +
-                                editCity.getText().toString() + ", " +
-                                editState.getText().toString() + ", " +
-                                editZipcode.getText().toString();
-
-                        List<Address> addresses = null;
-                        Geocoder geo = new Geocoder(ContactMapActivity.this);
-                        try {
-                            addresses = geo.getFromLocationName(address, 1);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                        TextView txtLatitude = (TextView) findViewById(R.id.latitudeText);
-                        TextView txtLongitude = (TextView) findViewById(R.id.longitudeText);
-                        try {
-                            txtLatitude.setText(String.valueOf(addresses.get(0).getLatitude()));
-                            txtLongitude.setText(String.valueOf(addresses.get(0).getLongitude()));
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-
-                }
-            });
+    public void onPause(){
+        super.onPause();
+        if (Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(getBaseContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(getBaseContext(),
+                        Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                        PackageManager.PERMISSION_GRANTED) {
+            return;
         }
-        //Updates the location while using GPS instead a click of a button.
-        private void getLocationUsingGps(){
         try {
-            locationManager = (LocationManager) getBaseContext().getSystemService(Context.LOCATION_SERVICE);
-
-            gpsListener = new LocationListener() {
-                @Override
-                public void onLocationChanged(@NonNull Location location) {
-                    TextView txtLatitude = (TextView) findViewById(R.id.latitudeText);
-                    TextView txtLongitude = (TextView) findViewById(R.id.longitudeText);
-                    TextView txtAccuracy = (TextView) findViewById(R.id.textAccuracy);
-                    txtLongitude.setText(String.valueOf(location.getLongitude()));
-                    txtLatitude.setText(String.valueOf(location.getLatitude()));
-                    txtAccuracy.setText(String.valueOf(location.getAccuracy()));
-                }
-
-                public void onStatusChanged(String provider, int status, Bundle extras) {
-
-                }
-
-                public void onProviderEnabled(String provider) {
-                }
-
-                public void onProviderDisabled(String provider) {
-                }
-            };
-            /*
-            locationManager.requestLocationUpdates(
-            LocationManager.GPS_PROVIDER,0,0,gpsListener);
-            */
-
-        }catch(Exception e ){
+            locationManager.removeUpdates(gpsListener);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        }
-
-    private void requestLocationPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                LOCATION_PERM_CODE);
     }
-    private void startLocationUpdates(){
-            //checks if permission has been  granted. If it has, the app starts the code to find the device’s location.
-            if(isLocationPermissionGranted()){
-                //This statement determines if the user had previously denied a request from the app to access the device’s location
-                if(ActivityCompat.shouldShowRequestPermissionRationale(ContactMapActivity.this,
-                        Manifest.permission.ACCESS_FINE_LOCATION)){
+
+    //Location Button method
+    private void initGetLocationButton() {
+        locationButton = findViewById(R.id.buttonGetLocation);
+        locationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String address;
+                EditText editAddress = (EditText) findViewById(R.id.editAddress);
+                EditText editCity = (EditText) findViewById(R.id.editCity);
+                EditText editState = (EditText) findViewById(R.id.editState);
+                EditText editZipcode = (EditText) findViewById(R.id.editZipcode);
+
+                address = editAddress.getText().toString() + ", " +
+                        editCity.getText().toString() + ", " +
+                        editState.getText().toString() + ", " +
+                        editZipcode.getText().toString();
+
+                List<Address> addresses = null;
+                Geocoder geo = new Geocoder(ContactMapActivity.this);
+                try {
+                    addresses = geo.getFromLocationName(address, 1);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                TextView txtLatitude = (TextView) findViewById(R.id.latitudeText);
+                TextView txtLongitude = (TextView) findViewById(R.id.longitudeText);
+                try {
+                    txtLatitude.setText(String.valueOf(addresses.get(0).getLatitude()));
+                    txtLongitude.setText(String.valueOf(addresses.get(0).getLongitude()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+    }
+
+    //Location Button method
+    private void initNewGetLocationButton() {
+        locationButton = findViewById(R.id.buttonGetLocation);
+        locationButton.setOnClickListener(new View.OnClickListener() {
+                                              @Override
+                                              public void onClick(View v) {
+                                                  try {
+                                                      if (Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(getBaseContext(),
+                                                              Manifest.permission.ACCESS_FINE_LOCATION) !=
+                                                              PackageManager.PERMISSION_GRANTED) {
+                                                          if (ActivityCompat.shouldShowRequestPermissionRationale(ContactMapActivity.this,
+                                                                  Manifest.permission.ACCESS_FINE_LOCATION)) {
+                                                              Snackbar.make(findViewById(R.id.activity_contact_map),
+                                                                              "MyContactList requires this permission to locate + your contacts", Snackbar.LENGTH_INDEFINITE).setAction("OK", new View.OnClickListener() {
+                                                                          @Override
+                                                                          public void onClick(View v) {
+                                                                              ActivityCompat.requestPermissions(
+                                                                                      ContactMapActivity.this,
+                                                                                      new String[]{
+                                                                                              Manifest.permission.ACCESS_FINE_LOCATION},
+                                                                                      LOCATION_PERM_CODE);
+
+                                                                          }
+                                                                      })
+                                                                      .show();
+                                                          } else {
+                                                              ActivityCompat.requestPermissions(ContactMapActivity.this, new String[]{
+                                                                      Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERM_CODE);
+                                                          }
+                                                      } else {
+                                                          startLocationUpdates();
+                                                      }
+                                                  } catch (Exception e) {
+                                                      Toast.makeText(getBaseContext(), "Error requesting permission", Toast.LENGTH_LONG).show();
+                                                  }
+                                              }
+                                          });
+    }
+
+            //Updates the location while using GPS instead a click of a button.
+            private void getLocationUsingGps() {
+                try {
+                    locationManager = (LocationManager) getBaseContext().getSystemService(Context.LOCATION_SERVICE);
+
+                    gpsListener = new LocationListener() {
+                        public void onLocationChanged(@NonNull Location location) {
+                            TextView txtLatitude = (TextView) findViewById(R.id.latitudeText);
+                            TextView txtLongitude = (TextView) findViewById(R.id.longitudeText);
+                            TextView txtAccuracy = (TextView) findViewById(R.id.textAccuracy);
+                            txtLongitude.setText(String.valueOf(location.getLongitude()));
+                            txtLatitude.setText(String.valueOf(location.getLatitude()));
+                            txtAccuracy.setText(String.valueOf(location.getAccuracy()));
+                        }
+
+                        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+                        }
+
+                        public void onProviderEnabled(String provider) {
+                        }
+
+                        public void onProviderDisabled(String provider) {
+                        }
+                    };
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
+
+            private void startLocationUpdates() {
+                if (Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(getBaseContext(),
+                        Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                        ContextCompat.checkSelfPermission(getBaseContext(),
+                                Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                                PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+            }
+            public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantedResults) {
+                super.onRequestPermissionsResult(requestCode, permissions, grantedResults);
+                switch (requestCode) {
+                    case LOCATION_PERM_CODE: {
+                        if (grantedResults.length > 0 && grantedResults[0] == PackageManager.PERMISSION_GRANTED) {
+                            startLocationUpdates();
+                        } else {
+                            Toast.makeText(ContactMapActivity.this, "MyContactList will not locate your contacts", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                }
+            }
+
+            //Navigate Buttons
+            //Method that Launches Settings Activity
+            private void launchSettings(View v) {
+                Intent i = new Intent(ContactMapActivity.this, ContactSettingsActivity.class);
+                i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(i);
+
+            }
+
+            //Method that launches Contact List
+            private void launchList(View v) {
+                Intent i = new Intent(ContactMapActivity.this, ContactListActivity.class);
+                i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(i);
+            }
+
+            //Method that launches MapContact List
+            private void launchMap(View v) {
+                Intent i = new Intent(ContactMapActivity.this, MainActivity.class);
+                i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(i);
+            }
         }
-
-
-
-
-
-
-@Override
-public void onPause(){
-        super.onPause();
-        try{
-            /*
-            locationManager.removeUpdates(gpsListener);
-*/
-        }
-        catch (Exception e){
-            e.printStackTrace();
-        }
-}
-//If Location is granted return true if not return false.
-private boolean isLocationPermissionGranted() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-    //Navigate Buttons
-    //Method that Launches Settings Activity
-    private void launchSettings(View v ){
-        Intent i = new Intent(ContactMapActivity.this, ContactSettingsActivity.class);
-        i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(i);
-
-    }
-    //Method that launches Contact List
-    private void launchList(View v) {
-        Intent i = new Intent(ContactMapActivity.this, ContactListActivity.class);
-        i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(i);
-    }
-    //Method that launches MapContact List
-    private void launchMap(View v) {
-        Intent i = new Intent(ContactMapActivity.this, MainActivity.class);
-        i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(i);
-    }
-}
