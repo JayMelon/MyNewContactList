@@ -73,7 +73,6 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         mapButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 launchMap(view);
             }
         });
@@ -415,9 +414,15 @@ private void hideKeyBoard(){
     }
     //Method that launches MapContact List
     private void launchMap(View v) {
-        Intent i = new Intent(MainActivity.this, ContactMapActivity.class);
-        i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(i);
+        Intent intent = new Intent(MainActivity.this,ContactMapActivity.class);
+        if(currentContact.getContactID()== -1){
+            Toast.makeText(MainActivity.this, "Contact must be saved before it can be mapped", Toast.LENGTH_SHORT).show();
+        }
+        else{
+            intent.putExtra("contactid",currentContact.getContactID());
+        }
+        intent.setFlags(intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
     }
 
 
