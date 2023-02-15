@@ -7,6 +7,14 @@
     android:id="@+id/activity_contact_map"
     tools:context=".ContactMapActivity">
 
+    <fragment
+        android:id="@+id/map_fragment"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="27dp"
+        tools:layout_editor_absoluteY="623dp" />
+
     <LinearLayout
         android:id="@+id/linearLayout2"
         android:layout_width="wrap_content"
@@ -23,6 +31,7 @@
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:contentDescription="@string/contactListDesc"
+            android:keepScreenOn="false"
             android:scaleType="centerInside"
             app:srcCompat="@drawable/contactlisticon"
             tools:ignore="RedundantDescriptionCheck" />
@@ -45,167 +54,4 @@
             app:srcCompat="@drawable/settingsicon" />
     </LinearLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintLayout2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <EditText
-            android:id="@+id/editAddress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:autofillHints=""
-            android:ems="16"
-            android:hint="@string/editAddressHint"
-            android:inputType="textPersonName"
-            android:minHeight="48dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textAddress"
-            tools:ignore="TextContrastCheck" />
-
-        <EditText
-            android:id="@+id/editState"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="2dp"
-            android:layout_marginTop="8dp"
-            android:ems="2"
-            android:hint="@string/editStateHint"
-            android:imeOptions="actionNext"
-            android:inputType="textCapCharacters"
-            android:maxLength="2"
-            android:minWidth="48dp"
-            android:minHeight="48dp"
-            app:layout_constraintStart_toEndOf="@+id/editCity"
-            app:layout_constraintTop_toBottomOf="@+id/editAddress"
-            tools:ignore="TextContrastCheck" />
-
-        <TextView
-            android:id="@+id/textAddress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:text="@string/addressTextViewName"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <EditText
-            android:id="@+id/editZipcode"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="2dp"
-            android:layout_marginTop="8dp"
-            android:autofillHints=""
-            android:ems="5"
-            android:hint="@string/editZipcodeHint"
-            android:imeOptions="actionNext"
-            android:inputType="textCapCharacters"
-            android:maxLength="5"
-            android:minHeight="48dp"
-            app:layout_constraintStart_toEndOf="@+id/editState"
-            app:layout_constraintTop_toBottomOf="@+id/editAddress"
-            tools:ignore="TextContrastCheck" />
-
-        <EditText
-            android:id="@+id/editCity"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:autofillHints=""
-            android:ems="9"
-            android:hint="@string/editCityHint"
-            android:imeOptions="actionNext"
-            android:inputType="textCapWords"
-            android:minHeight="48dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editAddress" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout2">
-
-        <Button
-            android:id="@+id/buttonGetLocation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="@string/getCoordinates"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="30dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/buttonGetLocation">
-
-            <TextView
-                android:id="@+id/Latitude"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ems="5"
-                android:text="@string/LatitudeString"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/Longitude"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ems="5"
-                android:text="@string/LongitudeString"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/Latitude" />
-
-            <TextView
-                android:id="@+id/Accuracy"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ems="5"
-                android:text="@string/AccuracyString"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/Longitude" />
-
-            <TextView
-                android:id="@+id/latitudeText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="64dp"
-                android:text="@string/emptyText"
-                app:layout_constraintBottom_toTopOf="@+id/longitudeText"
-                app:layout_constraintStart_toEndOf="@+id/Latitude" />
-
-            <TextView
-                android:id="@+id/longitudeText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="64dp"
-                android:text="@string/emptyText"
-                app:layout_constraintBottom_toTopOf="@+id/textAccuracy"
-                app:layout_constraintStart_toEndOf="@+id/Longitude" />
-
-            <TextView
-                android:id="@+id/textAccuracy"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="64dp"
-                android:text="@string/emptyText"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/Accuracy" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

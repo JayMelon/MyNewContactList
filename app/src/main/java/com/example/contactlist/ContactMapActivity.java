@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +13,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import com.google.android.gms.location.LocationRequest;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -23,33 +23,81 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ContactMapActivity extends AppCompatActivity {
     ImageButton settingsButton, mapButton, listButton;
-    Button locationButton;
+    GoogleMap gMap;
     LocationManager locationManager;
     LocationListener gpsListener;
-    private static final int LOCATION_PERM_CODE = 101;
+    SupportMapFragment mapFragment;
+    ArrayList<Contact> currentContacts;
+    FusedLocationProviderClient fusedLocationProviderClient;
+    LocationRequest locationRequest;
+    LocationCallback locationCallback;
+    private static final int REQUEST_LOCATION_PERMISSION = 101;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact_map);
         //Creating objects references
-       initNewGetLocationButton();
+        try {
+            if (Build.VERSION.SDK_INT >= 23) {
+                if (ContextCompat.checkSelfPermission(ContactMapActivity.this,
+                        Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(ContactMapActivity.this,
+                            Manifest.permission.ACCESS_FINE_LOCATION)) {
+                        Snackbar.make(findViewById(R.id.activity_contact_map), "MyContactList requires this permission to locate",
+                                        Snackbar.LENGTH_INDEFINITE).setAction("OK", new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        ActivityCompat.requestPermissions(
+                                                ContactMapActivity.this,
+                                                new String[]{
+                                                        Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
+                                    }
+                                })
+                                .show();
+                    } else {
+                        ActivityCompat.requestPermissions(ContactMapActivity.this,
+                                new String[]{
+                                        Manifest.permission.ACCESS_FINE_LOCATION},
+                                REQUEST_LOCATION_PERMISSION);
+                    }
+                } else {
+                    startMap();
+                }
+            } else {
+                startMap();
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        createLocationRequest();
+        createLocationCallBack();
 
 
         //Navigate Buttons
         settingsButton = findViewById(R.id.settingsButton);
         mapButton = findViewById(R.id.mapButton);
         listButton = findViewById(R.id.contactlistButton);
-
 
         //Settings button
         settingsButton.setOnClickListener(new View.OnClickListener() {
@@ -73,9 +121,30 @@ public class ContactMapActivity extends AppCompatActivity {
             public void onClick(View view) {
                 launchList(view);
             }
+
+        });
+
+
+    }
+
+    private void startMap() {
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
+        mapFragment.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(@NonNull GoogleMap googleMap) {
+                if (ContextCompat.checkSelfPermission(ContactMapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    gMap = googleMap;
+                    gMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                    startLocationUpdates();
+
+                }
+            }
         });
     }
-    public void onPause(){
+
+    public void onPause() {
         super.onPause();
         if (Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(getBaseContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
@@ -91,157 +160,63 @@ public class ContactMapActivity extends AppCompatActivity {
         }
     }
 
-    //Location Button method
-    private void initGetLocationButton() {
-        locationButton = findViewById(R.id.buttonGetLocation);
-        locationButton.setOnClickListener(new View.OnClickListener() {
+    //Navigate Buttons
+    //Method that Launches Settings Activity
+    private void launchSettings(View v) {
+        Intent i = new Intent(ContactMapActivity.this, ContactSettingsActivity.class);
+        i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(i);
+
+    }
+
+    //Method that launches Contact List
+    private void launchList(View v) {
+        Intent i = new Intent(ContactMapActivity.this, ContactListActivity.class);
+        i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(i);
+    }
+
+    //Method that launches MapContact List
+    private void launchMap(View v) {
+        Intent i = new Intent(ContactMapActivity.this, MainActivity.class);
+        i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(i);
+    }
+
+    private void createLocationRequest() {
+        locationRequest = LocationRequest.create();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(5000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
+
+    private void createLocationCallBack() {
+        locationCallback = new LocationCallback() {
             @Override
-            public void onClick(View view) {
-                String address;
-                EditText editAddress = (EditText) findViewById(R.id.editAddress);
-                EditText editCity = (EditText) findViewById(R.id.editCity);
-                EditText editState = (EditText) findViewById(R.id.editState);
-                EditText editZipcode = (EditText) findViewById(R.id.editZipcode);
-
-                address = editAddress.getText().toString() + ", " +
-                        editCity.getText().toString() + ", " +
-                        editState.getText().toString() + ", " +
-                        editZipcode.getText().toString();
-
-                List<Address> addresses = null;
-                Geocoder geo = new Geocoder(ContactMapActivity.this);
-                try {
-                    addresses = geo.getFromLocationName(address, 1);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                TextView txtLatitude = (TextView) findViewById(R.id.latitudeText);
-                TextView txtLongitude = (TextView) findViewById(R.id.longitudeText);
-                try {
-                    txtLatitude.setText(String.valueOf(addresses.get(0).getLatitude()));
-                    txtLongitude.setText(String.valueOf(addresses.get(0).getLongitude()));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-            }
-        });
-    }
-
-    //Location Button method
-    private void initNewGetLocationButton() {
-        locationButton = findViewById(R.id.buttonGetLocation);
-        locationButton.setOnClickListener(new View.OnClickListener() {
-                                              @Override
-                                              public void onClick(View v) {
-                                                  try {
-                                                      if (Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(getBaseContext(),
-                                                              Manifest.permission.ACCESS_FINE_LOCATION) !=
-                                                              PackageManager.PERMISSION_GRANTED) {
-                                                          if (ActivityCompat.shouldShowRequestPermissionRationale(ContactMapActivity.this,
-                                                                  Manifest.permission.ACCESS_FINE_LOCATION)) {
-                                                              Snackbar.make(findViewById(R.id.activity_contact_map),
-                                                                              "MyContactList requires this permission to locate + your contacts", Snackbar.LENGTH_INDEFINITE).setAction("OK", new View.OnClickListener() {
-                                                                          @Override
-                                                                          public void onClick(View v) {
-                                                                              ActivityCompat.requestPermissions(
-                                                                                      ContactMapActivity.this,
-                                                                                      new String[]{
-                                                                                              Manifest.permission.ACCESS_FINE_LOCATION},
-                                                                                      LOCATION_PERM_CODE);
-
-                                                                          }
-                                                                      })
-                                                                      .show();
-                                                          } else {
-                                                              ActivityCompat.requestPermissions(ContactMapActivity.this, new String[]{
-                                                                      Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERM_CODE);
-                                                          }
-                                                      } else {
-                                                          startLocationUpdates();
-                                                      }
-                                                  } catch (Exception e) {
-                                                      Toast.makeText(getBaseContext(), "Error requesting permission", Toast.LENGTH_LONG).show();
-                                                  }
-                                              }
-                                          });
-    }
-
-            //Updates the location while using GPS instead a click of a button.
-            private void getLocationUsingGps() {
-                try {
-                    locationManager = (LocationManager) getBaseContext().getSystemService(Context.LOCATION_SERVICE);
-
-                    gpsListener = new LocationListener() {
-                        public void onLocationChanged(@NonNull Location location) {
-                            TextView txtLatitude = (TextView) findViewById(R.id.latitudeText);
-                            TextView txtLongitude = (TextView) findViewById(R.id.longitudeText);
-                            TextView txtAccuracy = (TextView) findViewById(R.id.textAccuracy);
-                            txtLongitude.setText(String.valueOf(location.getLongitude()));
-                            txtLatitude.setText(String.valueOf(location.getLatitude()));
-                            txtAccuracy.setText(String.valueOf(location.getAccuracy()));
-                        }
-
-                        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-                        }
-
-                        public void onProviderEnabled(String provider) {
-                        }
-
-                        public void onProviderDisabled(String provider) {
-                        }
-                    };
-
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            private void startLocationUpdates() {
-                if (Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(getBaseContext(),
-                        Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                        ContextCompat.checkSelfPermission(getBaseContext(),
-                                Manifest.permission.ACCESS_COARSE_LOCATION) !=
-                                PackageManager.PERMISSION_GRANTED) {
+            public void onLocationResult(@NonNull LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                if (locationResult == null) {
                     return;
                 }
-            }
-            public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantedResults) {
-                super.onRequestPermissionsResult(requestCode, permissions, grantedResults);
-                switch (requestCode) {
-                    case LOCATION_PERM_CODE: {
-                        if (grantedResults.length > 0 && grantedResults[0] == PackageManager.PERMISSION_GRANTED) {
-                            startLocationUpdates();
-                        } else {
-                            Toast.makeText(ContactMapActivity.this, "MyContactList will not locate your contacts", Toast.LENGTH_LONG).show();
-                        }
-                    }
+                for (Location location : locationResult.getLocations()) {
+                    Toast.makeText(getBaseContext(), "Lat: " + location.getLatitude() +
+                            "Long: " + location.getLongitude() + "Accuracy: " + location.getAccuracy(), Toast.LENGTH_LONG).show();
+
                 }
             }
+        };
+    }
 
-            //Navigate Buttons
-            //Method that Launches Settings Activity
-            private void launchSettings(View v) {
-                Intent i = new Intent(ContactMapActivity.this, ContactSettingsActivity.class);
-                i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(i);
-
-            }
-
-            //Method that launches Contact List
-            private void launchList(View v) {
-                Intent i = new Intent(ContactMapActivity.this, ContactListActivity.class);
-                i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(i);
-            }
-
-            //Method that launches MapContact List
-            private void launchMap(View v) {
-                Intent i = new Intent(ContactMapActivity.this, MainActivity.class);
-                i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(i);
-            }
+    private void startLocationUpdates() {
+        if (Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(getBaseContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(getBaseContext(),
+                        Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                        PackageManager.PERMISSION_GRANTED) {
+            return;
         }
+        fusedLocationProviderClient.requestLocationUpdates(locationRequest,locationCallback, null);
+gMap.setMyLocationEnabled(true);
+    }
+
+}
