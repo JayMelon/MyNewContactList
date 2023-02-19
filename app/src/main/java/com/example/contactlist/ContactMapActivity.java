@@ -168,7 +168,6 @@ public class ContactMapActivity extends AppCompatActivity {
 
                             Geocoder geo = new Geocoder(ContactMapActivity.this);
                             List<Address> addresses = null;
-
                             String address = currentContact.getAddress() +
                                     ", "+currentContact.getCity() +
                                     ", " + currentContact.getState() + " " +
