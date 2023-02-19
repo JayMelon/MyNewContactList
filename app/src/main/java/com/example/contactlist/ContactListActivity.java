@@ -6,15 +6,18 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
-
 import java.util.ArrayList;
+import android.content.BroadcastReceiver;
 
 
 public class ContactListActivity extends AppCompatActivity {
@@ -24,6 +27,8 @@ public class ContactListActivity extends AppCompatActivity {
     RecyclerView contactList;
     String sortField;
     String sortOrder;
+    BroadcastReceiver batteryReceiver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,10 +42,6 @@ public class ContactListActivity extends AppCompatActivity {
         mapButton = findViewById(R.id.mapButton);
         listButton = findViewById(R.id.contactlistButton);
         //Gathers preferences
-
-
-
-
 
 
         //Settings button
@@ -69,36 +70,38 @@ public class ContactListActivity extends AppCompatActivity {
 
 
     }
+
     //When the activity is resuming get the Preferences so it can be changed without reboot.
     @Override
     public void onResume() {
         super.onResume();
         String sortBy = getSharedPreferences(ContactSettingsActivity.ContactList_Preferences,
-                Context.MODE_PRIVATE).getString(ContactSettingsActivity.sortFieldKey,DatabaseHelper.COLUMN_CONTACT_NAME);
+                Context.MODE_PRIVATE).getString(ContactSettingsActivity.sortFieldKey, DatabaseHelper.COLUMN_CONTACT_NAME);
         String sortOrder = getSharedPreferences(ContactSettingsActivity.ContactList_Preferences,
-                Context.MODE_PRIVATE).getString(ContactSettingsActivity.sortOrderFieldKey,"ASC");
+                Context.MODE_PRIVATE).getString(ContactSettingsActivity.sortOrderFieldKey, "ASC");
         ContactDataSource ds = new ContactDataSource(this);
         try {
             ds.open();
             contacts = ds.getContacts(sortBy, sortOrder);
             ds.close();
-            if(contacts.size()>0){
+            if (contacts.size() > 0) {
                 contactList = findViewById(R.id.rvContacts);
                 RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
                 contactList.setLayoutManager(layoutManager);
-                contactAdapter = new ContactAdapter(contacts,this);
+                contactAdapter = new ContactAdapter(contacts, this);
                 contactList.setAdapter(contactAdapter);
             } else {
                 //If the user has no contacts, Direct them to the main
                 Intent intent = new Intent(ContactListActivity.this, MainActivity.class);
                 startActivity(intent);
             }
-        }catch(Exception e ){
-            Toast.makeText(this,"Error retrieving contacts", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Error retrieving contacts", Toast.LENGTH_LONG).show();
         }
     }
+
     //Method that initilzing the Add contactbutton
-    private void initAddContactButton(){
+    private void initAddContactButton() {
         Button newContact = findViewById(R.id.buttonAddContact);
         newContact.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -110,7 +113,7 @@ public class ContactListActivity extends AppCompatActivity {
     }
 
     //Method that initilzing Recycleview
-    private void initRecycleView(){
+    private void initRecycleView() {
         ContactDataSource ds = new ContactDataSource(this);
         ArrayList<Contact> contacts;
 //Gets stuff from DBS
@@ -123,13 +126,14 @@ public class ContactListActivity extends AppCompatActivity {
             RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
             contactlist.setLayoutManager(layoutManager);
             //Inits the Adapt to the Recycleview
-            contactAdapter = new ContactAdapter(contacts,this);
+            contactAdapter = new ContactAdapter(contacts, this);
             contactlist.setAdapter(contactAdapter);
-        }catch(Exception e){
-            Toast.makeText(this,"Error retrieving contacts",Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Error retrieving contacts", Toast.LENGTH_LONG).show();
         }
     }
-    private void initDeleteSwitch(){
+
+    private void initDeleteSwitch() {
         Switch s = findViewById(R.id.switchDelete);
         s.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -159,18 +163,20 @@ public class ContactListActivity extends AppCompatActivity {
     };
 
     //Method that Launches Settings Activity
-    private void launchSettings(View v ){
+    private void launchSettings(View v) {
         Intent i = new Intent(ContactListActivity.this, ContactSettingsActivity.class);
         i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(i);
 
     }
+
     //Method that launches Home List
     private void launchList(View v) {
         Intent i = new Intent(ContactListActivity.this, MainActivity.class);
         i.setFlags(i.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(i);
     }
+
     //Method that launches MapContact List
     private void launchMap(View v) {
         Intent i = new Intent(ContactListActivity.this, ContactMapActivity.class);
@@ -178,4 +184,21 @@ public class ContactListActivity extends AppCompatActivity {
         startActivity(i);
     }
 
+    //Method that initizlizing the battery sensor
+    private void initBatterySensor() {
+        batteryReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                //Gets Battery level from OS
+                TextView textBatteryState;
+                double batteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+                double levelScale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 0);
+                int batteryPercent = (int) Math.floor(batteryLevel / levelScale * 100);
+                textBatteryState = findViewById(R.id.batteryText);
+                textBatteryState.setText(batteryPercent + "%");
+            }
+        };
+        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        registerReceiver(batteryReceiver, filter);
     }
+}

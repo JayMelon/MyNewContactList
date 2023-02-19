@@ -128,11 +128,26 @@ public class ContactMapActivity extends AppCompatActivity {
 
 
     }
-
+//Method that starts the map
     private void startMap() {
+        //Creates empty array list to gather contacts
+        contacts = new ArrayList<>();
+
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
-        getMapData();
+        Bundle extras = getIntent().getExtras();
+        try {
+            ContactDataSource ds = new ContactDataSource(ContactMapActivity.this);
+            ds.open();
+            if (extras != null) {
+                currentContact = ds.getSpecficContact(extras.getInt("contactid"));
+            } else {
+                contacts = ds.getContacts(DatabaseHelper.COLUMN_CONTACT_NAME, "ASC");
+            }
+            ds.close();
+        } catch (Exception e) {
+            Toast.makeText(this,"Contact(s) cound not be retrived.",Toast.LENGTH_LONG).show();
+        }
         mapFragment.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(@NonNull GoogleMap googleMap) {

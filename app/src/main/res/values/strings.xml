@@ -37,4 +37,5 @@
     <string name="LatitudeString">Latitude</string>
     <string name="getCoordinates">Get Coordinates</string>
     <string name="emptyText">None</string>
+    <string name="batteryDefault">100%</string>
 </resources>
