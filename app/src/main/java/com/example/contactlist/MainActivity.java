@@ -10,9 +10,11 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.text.Editable;
 import android.text.InputType;
@@ -37,9 +39,10 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
     public static final int PERMISSION_REQUEST_PHONE = 102;
     //Objects needed that will be used Globally
     ContactDataSource ds = new ContactDataSource(this);
-    ImageButton settingsButton, mapButton, listButton;
+    ImageButton settingsButton, mapButton, listButton, cameraButton;
     EditText editPhone, editCell;
-
+    final int PERMISSION_REQUEST_CAMERA = 103;
+    final int CAMERA_REQUEST = 1888;
     private Contact currentContact;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         initTextChangedEvents();
         initSavebutton();
         initCallFunction();
+        initImageButton();
         setTitle("Home");
         //If there is something in the intent populate the Contact details in the Editor, Else leave blank
         Bundle extras = getIntent().getExtras();
@@ -379,6 +383,42 @@ editPhone.setOnLongClickListener(new View.OnLongClickListener() {
             }
         });
     }
+    //Method that enable the camera feature
+    private void initImageButton(){
+        cameraButton = findViewById(R.id.imageContact);
+        cameraButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(Build.VERSION.SDK_INT>=23){
+                    if (ContextCompat.checkSelfPermission(MainActivity.this,
+                            Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        if(ActivityCompat.shouldShowRequestPermissionRationale(
+                                MainActivity.this,Manifest.permission.CAMERA
+                        )){
+                            Snackbar.make(findViewById(R.id.activity_main),"The app needs permission to take pictures. ",
+                                    Snackbar.LENGTH_INDEFINITE).setAction("Ok", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    ActivityCompat.requestPermissions(MainActivity.this,new String[]{
+                                    Manifest.permission.CAMERA}, PERMISSION_REQUEST_CAMERA);
+
+                                }
+                            }).show();
+                        }else{
+                            ActivityCompat.requestPermissions(MainActivity.this,
+                                    new String[]{Manifest.permission.CAMERA},PERMISSION_REQUEST_CAMERA);
+                        }
+                    }
+                    else {
+                        takePhoto();
+                    }
+                }else {
+                    takePhoto();
+                }
+            }
+        });
+    }
     private void checkPhonePermission(String phone){
         if(Build.VERSION.SDK_INT>=23){
             if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED){
@@ -409,18 +449,32 @@ callContact(phone);
         }
     }
     @Override
-    public void onRequestionPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults){
-        switch(requestCode){
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
             case PERMISSION_REQUEST_PHONE: {
-                if(grantResults.length>0 && grantResults[0]==
-                PackageManager.PERMISSION_GRANTED){
+                if (grantResults.length > 0 && grantResults[0] ==
+                        PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(this, "You may now call from this app", Toast.LENGTH_LONG).show();
-                }else{
-                    Toast.makeText(this,"You will not be able to make calls from this app", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(this, "You will not be able to make calls from this app", Toast.LENGTH_LONG).show();
                 }
+            }
+            case PERMISSION_REQUEST_CAMERA: {
+                if(grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                    takePhoto();
+                }else{
+                    Toast.makeText(MainActivity.this, "You will not be able to save contact pictures from this app",Toast.LENGTH_LONG).show();
+                }
+                return;
             }
         }
     }
+    private void takePhoto(){
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(cameraIntent, CAMERA_REQUEST);
+    }
+
     private void callContact(String phoneNumber) {
         Intent i = new Intent(Intent.ACTION_CALL);
         i.setData(Uri.parse("tel:" + phoneNumber));
@@ -442,7 +496,8 @@ callContact(phone);
         EditText editEmail = findViewById(R.id.editEMail);
         Button buttonChange = findViewById(R.id.buttonBirthday);
         Button buttonSave = findViewById(R.id.buttonSave);
-
+        ImageButton picture = findViewById(R.id.imageContact);
+        picture.setEnabled(enabled);
         editName.setEnabled(enabled);
         editAddress.setEnabled(enabled);
         editCity.setEnabled(enabled);

@@ -23,7 +23,7 @@ private void saveItem(Calendar selectedTime) {
     Calendar selectedDate;
 
     public interface SaveDateListener {
-        void onRequestionPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults);
+        void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults);
 
         void didFinishDatePickerDialog(Calendar selectedTime);
 

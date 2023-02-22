@@ -124,6 +124,22 @@
                     android:text="@string/contactTextViewName"
                     app:layout_constraintBottom_toTopOf="@+id/editName"
                     app:layout_constraintStart_toStartOf="parent" />
+
+                <ImageButton
+                    android:id="@+id/imageContact"
+                    android:layout_width="69dp"
+                    android:layout_height="64dp"
+                    android:layout_marginStart="32dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginBottom="4dp"
+                    android:background="@color/system_transparent"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/camera"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="1.0"
+                    app:layout_constraintStart_toEndOf="@+id/editName" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <androidx.constraintlayout.widget.ConstraintLayout
