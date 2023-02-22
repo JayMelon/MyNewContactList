@@ -5,6 +5,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -39,6 +44,12 @@ public class ContactDataSource {
             initialValues.put(DatabaseHelper.COLUMN_CONTACT_CELLNUMBER, c.getCellNumber());
             initialValues.put(DatabaseHelper.COLUMN_CONTACT_EMAIL, c.getEMail());
             initialValues.put(DatabaseHelper.COLUMN_CONTACT_BIRTHDAY, String.valueOf(c.getBirthday().getTimeInMillis()));
+            if(c.getPicture() != null ){
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                c.getPicture().compress(Bitmap.CompressFormat.PNG, 100, baos);
+                byte[] photo = baos.toByteArray();
+                initialValues.put(DatabaseHelper.COLUMN_CONTACT_CONTACTPHOTO,photo);
+            }
             //If a row was inserted return 1
             didSucceed = database.insert(DatabaseHelper.CONTACT_TABLE, null, initialValues) > 0;
 
@@ -64,6 +75,12 @@ public class ContactDataSource {
             updateValues.put(DatabaseHelper.COLUMN_CONTACT_CELLNUMBER, c.getCellNumber());
             updateValues.put(DatabaseHelper.COLUMN_CONTACT_EMAIL, c.getEMail());
             updateValues.put(DatabaseHelper.COLUMN_CONTACT_BIRTHDAY, String.valueOf(c.getBirthday().getTimeInMillis()));
+            if(c.getPicture() != null ){
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                c.getPicture().compress(Bitmap.CompressFormat.PNG, 100, baos);
+                byte[] photo = baos.toByteArray();
+                updateValues.put(DatabaseHelper.COLUMN_CONTACT_CONTACTPHOTO,photo);
+            }
             //If table is updated if the Contact ids are Identical.
             String whereClause  = DatabaseHelper.COLUMN_CONTACT_ID+"= ";
             didSucceed = database.update(DatabaseHelper.CONTACT_TABLE, updateValues, whereClause + rowID, null) > 0;
@@ -186,6 +203,13 @@ public class ContactDataSource {
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(Long.valueOf(cursor.getString(9)));
             contact.setBirthday(calendar);
+            //Gathers photo from DBS and set it to the contact.
+            byte[] photo = cursor.getBlob(10);
+            if(photo != null){
+                ByteArrayInputStream imageStream = new ByteArrayInputStream(photo);
+                Bitmap thePicture = BitmapFactory.decodeStream(imageStream);
+                contact.setPicture(thePicture);
+            }
 
             cursor.close();
         }

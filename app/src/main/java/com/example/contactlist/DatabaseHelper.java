@@ -9,7 +9,7 @@ import androidx.annotation.Nullable;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "mycontacts.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
     public static final String CONTACT_TABLE = "CONTACT_TABLE";
     public static final String COLUMN_CONTACT_ID = "COLUMN_CONTACTID";
     public static final String COLUMN_CONTACT_NAME = "COLUMN_CONTACT_NAME";
@@ -21,6 +21,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_CONTACT_CELLNUMBER = "COLUMN_CONTACT_CELLNUMBER";
     public static final String COLUMN_CONTACT_EMAIL = "COLUMN_CONTACT_EMAIL";
     public static final String COLUMN_CONTACT_BIRTHDAY = "COLUMN_CONTACT_BIRTHDAY";
+    public static final String COLUMN_CONTACT_CONTACTPHOTO = "COLUMN_CONTACT_CONTACTPHOTO";
     private static final String CREATE_TABLE = "CREATE TABLE "
             + CONTACT_TABLE +
             " (" + COLUMN_CONTACT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -32,7 +33,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + COLUMN_CONTACT_PHONENUMBER + " TEXT, "
             + COLUMN_CONTACT_CELLNUMBER + " TEXT, "
             + COLUMN_CONTACT_EMAIL + " TEXT, "
-            + COLUMN_CONTACT_BIRTHDAY + " TEXT )";
+            + COLUMN_CONTACT_BIRTHDAY + " TEXT, "
+            + COLUMN_CONTACT_CONTACTPHOTO + " BLOB )";
 
     public DatabaseHelper(@Nullable Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -46,9 +48,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase database, int i, int i1) {
-        Log.w(DatabaseHelper.class.getName(), "Upgrading database from version " + i + " To" + i1 + ", which will destroy all old data");
-        database.execSQL("DROP TABLE IF EXISTS "+ COLUMN_CONTACT_NAME);
-        onCreate(database);
+        //Log.w(DatabaseHelper.class.getName(), "Upgrading database from version " + i + " To" + i1 + ", which will destroy all old data");
+        //database.execSQL("DROP TABLE IF EXISTS "+ COLUMN_CONTACT_NAME);
+        //onCreate(database);
+        try{
+            database.execSQL("ALTER TABLE "+CONTACT_TABLE+" ADD COLUMN "+COLUMN_CONTACT_CONTACTPHOTO+" BLOB");
+        }catch (Exception e ){
+
+        }
     }
 
 

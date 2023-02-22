@@ -365,6 +365,13 @@ etCellNumber.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
         editCell.setText(currentContact.getCellNumber());
         editEmail.setText(currentContact.getEMail());
         birthDay.setText(DateFormat.format("MM/dd/yyyy",currentContact.getBirthday().getTimeInMillis()).toString());
+        ImageButton picture = (ImageButton) findViewById(R.id.imageContact);
+        if(currentContact.getPicture() != null){
+            picture.setImageBitmap(currentContact.getPicture());
+        }
+        else{
+            picture.setImageResource(R.drawable.camera);
+        }
     }
     //Method that enables texts
     private void initCallFunction(){
