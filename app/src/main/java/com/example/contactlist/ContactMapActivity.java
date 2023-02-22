@@ -352,7 +352,7 @@ private void initCompass(){
     textDirection = (TextView) findViewById(R.id.gpsText);
 
 }
-    private SensorEventListener mySensorEventListener = new SensorEventListener() {
+private SensorEventListener mySensorEventListener = new SensorEventListener() {
         float[] accelerometerValues;
         float[] magneticValues;
         @Override
@@ -400,4 +400,6 @@ private void initCompass(){
 
         }
     };
+
+
 }

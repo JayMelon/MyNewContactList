@@ -1,13 +1,21 @@
 package com.example.contactlist;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.view.View;
@@ -20,14 +28,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 
 public class MainActivity extends AppCompatActivity implements DatePickerDialog.SaveDateListener {
+    public static final int PERMISSION_REQUEST_PHONE = 102;
     //Objects needed that will be used Globally
     ContactDataSource ds = new ContactDataSource(this);
     ImageButton settingsButton, mapButton, listButton;
+    EditText editPhone, editCell;
+
     private Contact currentContact;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements DatePickerDialog.
         initChangeDateButton();
         initTextChangedEvents();
         initSavebutton();
+        initCallFunction();
         setTitle("Home");
         //If there is something in the intent populate the Contact details in the Editor, Else leave blank
         Bundle extras = getIntent().getExtras();
@@ -348,6 +361,76 @@ etCellNumber.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
         birthDay.setText(DateFormat.format("MM/dd/yyyy",currentContact.getBirthday().getTimeInMillis()).toString());
     }
     //Method that enables texts
+    private void initCallFunction(){
+editPhone = findViewById(R.id.editHome);
+editPhone.setOnLongClickListener(new View.OnLongClickListener() {
+    @Override
+    public boolean onLongClick(View v) {
+        checkPhonePermission(currentContact.getPhoneNumber());
+        return false;
+    }
+});
+        editCell = findViewById(R.id.editCell);
+        editCell.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                checkPhonePermission(currentContact.getPhoneNumber());
+                return false;
+            }
+        });
+    }
+    private void checkPhonePermission(String phone){
+        if(Build.VERSION.SDK_INT>=23){
+            if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED){
+                if(ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                        Manifest.permission.CALL_PHONE)){
+                    Snackbar.make(findViewById(R.id.activity_main),
+                            "MyContactList requires this permission to place a call from the app.",
+                            Snackbar.LENGTH_INDEFINITE).setAction("OK", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            ActivityCompat.requestPermissions(
+                                    MainActivity.this,
+                                    new String[]{
+                                         Manifest.permission.CALL_PHONE
+                                    },PERMISSION_REQUEST_PHONE
+                            );
+                        }
+                    }).show();
+                }else{
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.CALL_PHONE},PERMISSION_REQUEST_PHONE);
+                }
+            }else{
+callContact(phone);
+            }
+        }else {
+            callContact(phone);
+        }
+    }
+    @Override
+    public void onRequestionPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults){
+        switch(requestCode){
+            case PERMISSION_REQUEST_PHONE: {
+                if(grantResults.length>0 && grantResults[0]==
+                PackageManager.PERMISSION_GRANTED){
+                    Toast.makeText(this, "You may now call from this app", Toast.LENGTH_LONG).show();
+                }else{
+                    Toast.makeText(this,"You will not be able to make calls from this app", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+    private void callContact(String phoneNumber) {
+        Intent i = new Intent(Intent.ACTION_CALL);
+        i.setData(Uri.parse("tel:" + phoneNumber));
+        if (Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            else {
+                startActivity(i);
+            }
+        }
     private void setForEditing(boolean enabled){
         EditText editName = findViewById(R.id.editName);
         EditText editAddress = findViewById(R.id.editAddress);
@@ -365,12 +448,14 @@ etCellNumber.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
         editCity.setEnabled(enabled);
         editState.setEnabled(enabled);
         editZipCode.setEnabled(enabled);
-        editPhone.setEnabled(enabled);
-        editCell.setEnabled(enabled);
         editEmail.setEnabled(enabled);
         buttonChange.setEnabled(enabled);
         buttonSave.setEnabled(enabled);
+        editPhone.setInputType(InputType.TYPE_NULL);
+        editCell.setInputType(InputType.TYPE_NULL);
         if (enabled){
+            editPhone.setInputType(InputType.TYPE_CLASS_PHONE);
+            editCell.setInputType(InputType.TYPE_CLASS_PHONE);
             editName.requestFocus();
         }else{
             ScrollView s = findViewById(R.id.scrollView);
@@ -433,4 +518,5 @@ private void hideKeyBoard(){
         birthDay.setText(DateFormat.format("MM/dd/yyyy", selectedTime));
         currentContact.setBirthday(selectedTime);
     }
+
 }
